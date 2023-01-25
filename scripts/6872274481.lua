@@ -719,57 +719,58 @@ bedwars["breakBlock"] = function(pos, effects, normal, bypass)
 	if lplr:GetAttribute("DenyBlockBreak") == true then
 		return nil
 	end
-	local block = ((bypass == nil and getlastblock(pos, Enum.NormalId[normal])) or getblock(pos))
-	local notmainblock = not ((bypass == nil and getlastblock(pos, Enum.NormalId[normal])))
-	if block and bedwars["BlockController"]:isBlockBreakable({blockPosition = bedwars["BlockController"]:getBlockPosition((notmainblock and pos or block.Position))}, lplr) then
-		if bedwars["BlockEngineClientEvents"].DamageBlock:fire(block.Name, bedwars["BlockController"]:getBlockPosition((notmainblock and pos or block.Position)), block):isCancelled() then
+	local block, blockpos = nil, nil
+	if not bypass then block, blockpos = getlastblock(pos, normal) end
+	if not block then block, blockpos = getblock(pos) end
+	if blockpos and block then
+		if bedwars["BlockEngineClientEvents"].DamageBlock:fire(block.Name, blockpos, block):isCancelled() then
 			return nil
 		end
-		local olditem = nil
-		pcall(function()
-			olditem = lplr.Character.HandInvItem.Value
-		end)
-		local blockhealthbarpos = {blockPosition = Vector3.new(0, 0, 0)}
+		local blockhealthbarpos = {blockPosition = Vector3.zero}
 		local blockdmg = 0
 		if block and block.Parent ~= nil then
+			if ((oldcloneroot and oldcloneroot.Position or localserverpos or entity.character.HumanoidRootPart.Position) - (blockpos * 3)).magnitude > 30 then return end
 			switchToAndUseTool(block)
 			blockhealthbarpos = {
-				blockPosition = bedwars["BlockController"]:getBlockPosition((notmainblock and pos or block.Position))
+				blockPosition = blockpos
 			}
 			if healthbarblocktable.blockHealth == -1 or blockhealthbarpos.blockPosition ~= healthbarblocktable.breakingBlockPosition then
 				local blockdata = bedwars["BlockController"]:getStore():getBlockData(blockhealthbarpos.blockPosition)
-				if not blockdata then
-					return nil
-				end
-				local blockhealth = blockdata:GetAttribute(lplr.Name .. "_Health")
-				if blockhealth == nil then
-					blockhealth = block:GetAttribute("Health");
-				end
+				local blockhealth = blockdata and blockdata:GetAttribute(lplr.Name .. "_Health") or block:GetAttribute("Health")
 				healthbarblocktable.blockHealth = blockhealth
 				healthbarblocktable.breakingBlockPosition = blockhealthbarpos.blockPosition
 			end
 			blockdmg = bedwars["BlockController"]:calculateBlockDamage(lplr, blockhealthbarpos)
-			healthbarblocktable.blockHealth = healthbarblocktable.blockHealth - blockdmg
-			if healthbarblocktable.blockHealth < 0 then
-				healthbarblocktable.blockHealth = 0
-			end
 			bedwars["ClientHandlerDamageBlock"]:Get("DamageBlock"):CallServerAsync({
 				blockRef = blockhealthbarpos, 
-				hitPosition = (notmainblock and pos or block.Position), 
-				hitNormal = Vector3.FromNormalId(Enum.NormalId[normal])
-			}):andThen(function(p9)
-				if p9 == "failed" then
-					healthbarblocktable.blockHealth = healthbarblocktable.blockHealth + blockdmg
+				hitPosition = blockpos * 3, 
+				hitNormal = Vector3.FromNormalId(normal)
+			}):andThen(function(result)
+				if result ~= "failed" then
+					healthbarblocktable.blockHealth = math.max(healthbarblocktable.blockHealth - blockdmg, 0)
+					if effects then
+						bedwars["BlockBreaker"]:updateHealthbar(blockhealthbarpos, healthbarblocktable.blockHealth, block:GetAttribute("MaxHealth"), blockdmg)
+						if healthbarblocktable.blockHealth <= 0 then
+							bedwars["BlockBreaker"].breakEffect:playBreak(block.Name, blockhealthbarpos.blockPosition, lplr)
+							bedwars["BlockBreaker"].healthbarMaid:DoCleaning()
+							healthbarblocktable.breakingBlockPosition = Vector3.zero
+						else
+							bedwars["BlockBreaker"].breakEffect:playHit(block.Name, blockhealthbarpos.blockPosition, lplr)
+						end
+					end
 				end
 			end)
-			if effects then
-				bedwars["BlockBreaker"]:updateHealthbar(blockhealthbarpos, healthbarblocktable.blockHealth, block:GetAttribute("MaxHealth"), blockdmg)
-				if healthbarblocktable.blockHealth <= 0 then
-					bedwars["BlockBreaker"].breakEffect:playBreak(block.Name, blockhealthbarpos.blockPosition, lplr)
-					bedwars["BlockBreaker"].healthbarMaid:DoCleaning()
-				else
-					bedwars["BlockBreaker"].breakEffect:playHit(block.Name, blockhealthbarpos.blockPosition, lplr)
-				end
+			local animation
+			if anim then
+				animation = bedwars["AnimationUtil"]:playAnimation(lplr, bedwars["BlockController"]:getAnimationController():getAssetId(1))
+				bedwars["ViewmodelController"]:playAnimation(15)
+			end
+			task.wait(0.3)
+			if animation ~= nil then
+				animation:Stop()
+			end
+			if animation ~= nil then
+				animation:Destroy()
 			end
 		end
 	end

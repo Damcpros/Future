@@ -448,7 +448,7 @@ local function getMoveDirection(plr)
 end
 
 local function getwool()
-	for i5, v5 in pairs(bedwars["getInventory"](lplr)["items"]) do
+	for i5, v5 in pairs(bedwars["getInventory2"](lplr)["items"]) do
 		if v5.itemType:match("wool") then
 			return v5.itemType, v5.amount
 		end
@@ -457,7 +457,7 @@ local function getwool()
 end
 
 local function getwoolamt()
-	for i5, v5 in pairs(bedwars["getInventory"](lplr)["items"]) do
+	for i5, v5 in pairs(bedwars["getInventory2"](lplr)["items"]) do
 		if v5.itemType:match("wool") then
 			return v5.amount
 		end
@@ -475,7 +475,7 @@ local function getblockitem()
 end
 
 local function getItem(itemName)
-	for i5, v5 in pairs(bedwars["getInventory"](lplr)["items"]) do
+	for i5, v5 in pairs(bedwars["getInventory2"](lplr)["items"]) do
 		if v5.itemType == itemName then
 			return v5, i5
 		end
@@ -484,7 +484,7 @@ local function getItem(itemName)
 end
 
 local function getItemAmt(itemName)
-	for i5, v5 in pairs(bedwars["getInventory"](lplr)["items"]) do
+	for i5, v5 in pairs(bedwars["getInventory2"](lplr)["items"]) do
 		if v5.itemType == itemName then
 			return v5.amount
 		end
@@ -525,7 +525,7 @@ end
 
 local function getBow()
 	local bestsword, bestswordslot, bestswordnum = nil, nil, 0
-	for i5, v5 in pairs(bedwars["getInventory"](lplr).items) do
+	for i5, v5 in pairs(bedwars["getInventory2"](lplr).items) do
 		if v5.itemType:find("bow") then
 			local tab = bedwars["ItemTable"][v5.itemType].projectileSource.ammoItemTypes
 			local tab2 = tab[#tab]
@@ -540,7 +540,7 @@ local function getBow()
 end
 
 local function getItem(itemName)
-	for i5, v5 in pairs(bedwars["getInventory"](lplr)["items"]) do
+	for i5, v5 in pairs(bedwars["getInventory2"](lplr)["items"]) do
 		if v5.itemType == itemName then
 			return v5, i5
 		end
@@ -580,7 +580,7 @@ local function getBestTool(block)
 	if blockmeta["block"] and blockmeta["block"]["breakType"] then
 		blockType = blockmeta["block"]["breakType"]
 	end
-	for i,v in pairs(bedwars["getInventory"](lplr)["items"]) do
+	for i,v in pairs(bedwars["getInventory2"](lplr)["items"]) do
 		local meta = bedwars["getItemMetadata"](v.itemType)
 		if meta["breakBlock"] and meta["breakBlock"][blockType] then
 			tool = v
